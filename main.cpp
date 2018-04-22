@@ -38,7 +38,8 @@ DataType ForceCalc(int x1, int y1, int x2, int y2, int m1, int m2, int xory){
 	return total_force;
 }
 
-int main(int argc, char* argv[]){
+int main(int argc, char* argv[])
+{
 
 	if( argc != 10){
 		printf("Usage: %s numParticlesLight numParticleMedium numParticleHeavy numSteps subSteps timeSubStep imageWidth imageHeight imageFilenamePrex\n", argv[0]);
@@ -101,7 +102,7 @@ int main(int argc, char* argv[]){
 		DataType* compute_pos_y = (DataType *) malloc(sizeof(DataType) * particle_perproc);
 		//DataType* compute_mass = (DataType *) malloc(sizeof(DataType) * particle_perproc);
 
-		for (int k = 1 ; k < p +1 ; k+=p ) {
+		for (int k = 1 ; k < p +1 ; k+=p ) { //distribute data
 			for(int j = 0; j < particle_perproc ; j+=p){
 				compute_pos_x[j] = pos_x[j*(k-1)];
 				compute_pos_y[j] = pos_y[j*(k-1)];
@@ -110,42 +111,39 @@ int main(int argc, char* argv[]){
 			MPI_ISend(&(compute_pos_x[0]), particle_perproc, MPI_INT, k, 0, MPI_COMM_WORLD, );
 			MPI_ISend(&(compute_pos_y[0]), particle_perproc, MPI_INT, k, 0, MPI_COMM_WORLD, );
 		}
-
-
-
-		saveBMP(argv[9], image, width, height); //almost done, just save the image
 	}
 
 	else{ //all other nodes do this
-			DataType* local_mass = (DataType *) malloc(sizeof(DataType) * particle_perproc);
-			DataType* loc_arr_src_x = (DataType *) malloc(sizeof(DataType) * particle_perproc);
-			DataType* loc_arr_dst_x = (DataType *) malloc(sizeof(DataType) * particle_perproc);
-			DataType* loc_arr_src_y = (DataType *) malloc(sizeof(DataType) * particle_perproc);
-			DataType* loc_arr_dst_y = (DataType *) malloc(sizeof(DataType) * particle_perproc);
 
-			DataType* temp_mass = (DataType *) malloc(sizeof(DataType) * particle_perproc);
-			DataType* temp_arr_src_x = (DataType *) malloc(sizeof(DataType) * particle_perproc);
-			DataType* temp_arr_dst_x = (DataType *) malloc(sizeof(DataType) * particle_perproc);
-			DataType* temp_arr_src_y = (DataType *) malloc(sizeof(DataType) * particle_perproc);
-			DataType* temp_arr_dst_y = (DataType *) malloc(sizeof(DataType) * particle_perproc);
+		DataType* local_mass = (DataType *) malloc(sizeof(DataType) * particle_perproc);
+		DataType* loc_arr_src_x = (DataType *) malloc(sizeof(DataType) * particle_perproc);
+		DataType* loc_arr_dst_x = (DataType *) malloc(sizeof(DataType) * particle_perproc);
+		DataType* loc_arr_src_y = (DataType *) malloc(sizeof(DataType) * particle_perproc);
+		DataType* loc_arr_dst_y = (DataType *) malloc(sizeof(DataType) * particle_perproc);
 
-			MPI_Recv(&(loc_arr_src_x[0]),  particle_perproc, MPI_INT, 0, 0, MPI_COMM_WORLD);
-			MPI_Recv(&(loc_arr_src_y[0]),  particle_perproc, MPI_INT, 0, 0, MPI_COMM_WORLD);
+		DataType* temp_mass = (DataType *) malloc(sizeof(DataType) * particle_perproc);
+		DataType* temp_arr_src_x = (DataType *) malloc(sizeof(DataType) * particle_perproc);
+		DataType* temp_arr_dst_x = (DataType *) malloc(sizeof(DataType) * particle_perproc);
+		DataType* temp_arr_src_y = (DataType *) malloc(sizeof(DataType) * particle_perproc);
+		DataType* temp_arr_dst_y = (DataType *) malloc(sizeof(DataType) * particle_perproc);
 
-			for (int frames = 0; frames < numSteps ; frames++){
-				for (int sub = 0; sub < subSteps ; sub++){
-					for(int ringcomm = 0; ringcomm < p - 1; ringcomm++){
-						if (my_rank != 0){
+		MPI_Recv(&(loc_arr_src_x[0]),  particle_perproc, MPI_INT, 0, 0, MPI_COMM_WORLD);
+		MPI_Recv(&(loc_arr_src_y[0]),  particle_perproc, MPI_INT, 0, 0, MPI_COMM_WORLD);
 
-							//compute FOrcesssssssss
-						}
+		for (int frames = 0; frames < numSteps ; frames++){
+			for (int sub = 0; sub < subSteps ; sub++){
+				for(int ringcomm = 0; ringcomm < p - 1; ringcomm++){
+					if (my_rank != 0){
 
+						//compute FOrcesssssssss and update local_arrays
+					}
+				}
 			}
+			saveBMP(argv[9], image, width, height); //almost done, just save the image
 		}
 	}
 
 	free(image);
-
 	MPI_Finalize();
 	return 0;
 }
