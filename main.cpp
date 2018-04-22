@@ -30,7 +30,7 @@ DataType ForceCalc(int x1, int y1, int x2, int y2, int m1, int m2, int xory){
 	int dist3 = dist*dist*dist;
 
 	/* COMPUTE FORCE */
-	if(xory == 0){
+	if(xory == 0){ //x == 0
 		total_force = -G*m1*m2/dist3*dx;
 	} else if (xory == 1){
 		total_force = -G*m1*m2/dist3*dy;
@@ -63,12 +63,12 @@ int main(int argc, char* argv[]){
 	int numSteps = 0;
 	int subSteps = 0;
 	DataType timeSubStep;
-	int particles_torecv, particle_perproc = numParticlesTotal/p, particle_left = numParticlesTotal%p;
+	int particle_perproc = numParticlesTotal/p;
 	unsigned char* image;
 
 	//root node stuff goes here
 	if(my_rank == 0){
-
+		//------------------------------------------ Init
 		pos_x = (DataType *) malloc(sizeof(DataType) * numParticlesTotal);
 		pos_y = (DataType *) malloc(sizeof(DataType) * numParticlesTotal);
 		vel_x = (DataType *) malloc(sizeof(DataType) * numParticlesTotal);
@@ -98,42 +98,26 @@ int main(int argc, char* argv[]){
 				vel_y[i] = drand48();
 				numParticlesTotal--;
 			}
-		}
-
-
-		for (int outp = 0; outp < p; outp++){
-
-		//particles for each processor
-			if (outp < particle_left) {
-				particles_torecv = particle_perproc + 1;
-			}
-			else {
-				particles_torecv = particle_perproc;
-			}
-
-			DataType* local_mass = (DataType *) malloc(sizeof(DataType) * particles_torecv);
-			DataType* loc_arr_src_x = (DataType *) malloc(sizeof(DataType) * particles_torecv);
-			DataType* loc_arr_dst_x = (DataType *) malloc(sizeof(DataType) * particles_torecv);
-			DataType* loc_arr_src_y = (DataType *) malloc(sizeof(DataType) * particles_torecv);
-			DataType* loc_arr_dst_y = (DataType *) malloc(sizeof(DataType) * particles_torecv);
-
-			DataType* temp_mass = (DataType *) malloc(sizeof(DataType) * particles_torecv);
-			DataType* temp_arr_src_x = (DataType *) malloc(sizeof(DataType) * particles_torecv);
-			DataType* temp_arr_dst_x = (DataType *) malloc(sizeof(DataType) * particles_torecv);
-			DataType* temp_arr_src_y = (DataType *) malloc(sizeof(DataType) * particles_torecv);
-			DataType* temp_arr_dst_y = (DataType *) malloc(sizeof(DataType) * particles_torecv);
-
-
-			DataType* compute_pos_x = (DataType *) malloc(sizeof(DataType) * particles_torecv);
-			DataType* compute_pos_y = (DataType *) malloc(sizeof(DataType) * particles_torecv);
-		}
-
-		//almost done, just save the image
-		saveBMP(argv[9], image, width, height);
+		}		
+		saveBMP(argv[9], image, width, height); //almost done, just save the image
 	}
-	//all other nodes do this
-	else{
+	
+	else{ //all other nodes do this
+			DataType* local_mass = (DataType *) malloc(sizeof(DataType) * particle_perproc);
+			DataType* loc_arr_src_x = (DataType *) malloc(sizeof(DataType) * particle_perproc);
+			DataType* loc_arr_dst_x = (DataType *) malloc(sizeof(DataType) * particle_perproc);
+			DataType* loc_arr_src_y = (DataType *) malloc(sizeof(DataType) * particle_perproc);
+			DataType* loc_arr_dst_y = (DataType *) malloc(sizeof(DataType) * particle_perproc);
 
+			DataType* temp_mass = (DataType *) malloc(sizeof(DataType) * particle_perproc);
+			DataType* temp_arr_src_x = (DataType *) malloc(sizeof(DataType) * particle_perproc);
+			DataType* temp_arr_dst_x = (DataType *) malloc(sizeof(DataType) * particle_perproc);
+			DataType* temp_arr_src_y = (DataType *) malloc(sizeof(DataType) * particle_perproc);
+			DataType* temp_arr_dst_y = (DataType *) malloc(sizeof(DataType) * particle_perproc);
+
+
+			DataType* compute_pos_x = (DataType *) malloc(sizeof(DataType) * particle_perproc);
+			DataType* compute_pos_y = (DataType *) malloc(sizeof(DataType) * particle_perproc);
 	}
 
 	free(image);
