@@ -1,4 +1,4 @@
-vel_y#include <stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include <string.h>
@@ -11,31 +11,31 @@ vel_y#include <stdio.h>
 #include "properties.h"
 
 #define epsilon 0.000000000000000222
+#define G (6.673e-11)
+#define DataType float
 
-#define g_constant (6.673e-11)
+DataType * pos_x;
+DataType * pos_y;
+DataType * vel_x;
+DataType * vel_y;
+DataType * mass;
 
-double * pos_x;
-double * pos_y;
-double * vel_x;
-double * vel_y;
-double * mass;
+using namespace std;
 
-
-double ForceCalc(int x1, int y1, int x2, int y2, int m1, int m2, int xory){
-	double total_force = 0;
+DataType ForceCalc(int x1, int y1, int x2, int y2, int m1, int m2, int xory){
+	DataType total_force = 0;
 	int dx = x1-x2;
 	int dy = y1-y2;
 	int dist = sqrt(dx*dx+dy*dy);
-	int 3dist = dist*dist*dist;
+	int dist3 = dist*dist*dist;
 
 	/* COMPUTE FORCE */
 	if(xory == 0){
-		total_force = -g*w1*w1/3dist*dx;
+		total_force = -G*m1*m2/dist3*dx;
 	} else if (xory == 1){
-		total_force = -g*w1*w1/3dist*dy;
+		total_force = -G*m1*m2/dist3*dy;
 	}
 	return total_force;
-}
 }
 
 int main(int argc, char* argv[]){
@@ -58,24 +58,24 @@ int main(int argc, char* argv[]){
 	int width = stoi(argv[7]);
 	int height = stoi(argv[8]);
 
-	int totalParticles = lightParticles + mediumParticles + heavyParticles;
+	int numParticlesTotal = numParticlesLight + numParticleMedium + numParticleHeavy;
 
 	int numSteps = 0;
 	int subSteps = 0;
-	double timeSubStep;
+	DataType timeSubStep;
 	int particles_torecv, particle_perproc = numParticlesTotal/p, particle_left = numParticlesTotal%p;
 	unsigned char* image;
 
 	//root node stuff goes here
 	if(my_rank == 0){
 
-		pos_x = (double *) malloc(sizeof(double) * numParticlesTotal);
-		pos_y = (double *) malloc(sizeof(double) * numParticlesTotal);
-		vel_x = (double *) malloc(sizeof(double) * numParticlesTotal);
-		vel_y = (double *) malloc(sizeof(double) * numParticlesTotal);
-		mass = (double *) malloc(sizeof(double) * numParticlesTotal);
+		pos_x = (DataType *) malloc(sizeof(DataType) * numParticlesTotal);
+		pos_y = (DataType *) malloc(sizeof(DataType) * numParticlesTotal);
+		vel_x = (DataType *) malloc(sizeof(DataType) * numParticlesTotal);
+		vel_y = (DataType *) malloc(sizeof(DataType) * numParticlesTotal);
+		mass = (DataType *) malloc(sizeof(DataType) * numParticlesTotal);
 
-		for(i = 0; i < numParticlesTotal; i++){
+		for(int i = 0; i < numParticlesTotal; i++){
 			if(i < numParticlesLight){
 				mass[i] = 1;
 				pos_x[i] = drand48()*width;
@@ -83,7 +83,7 @@ int main(int argc, char* argv[]){
 				vel_x[i] = drand48();
 				vel_y[i] = drand48();
 				numParticlesTotal--;
-			} else if(i >= numParticlesLight && i < (numParticlesLight+numParticlesMedium)){
+			} else if(i >= numParticlesLight && i < (numParticlesLight+numParticleMedium)){
 				mass[i] = 2;
 				pos_x[i] = drand48()*width;
 				pos_y[i] = drand48()*height;
@@ -111,25 +111,22 @@ int main(int argc, char* argv[]){
 				particles_torecv = particle_perproc;
 			}
 
-			local_mass = (int *) malloc(sizeof(int) * particles_torecv);
-			loc_arr_src_x = (int *) malloc(sizeof(int) * particles_torecv);
-			loc_arr_dst_x = (double *) malloc(sizeof(double) * particles_torecv);
-			loc_arr_src_y = (int *) malloc(sizeof(int) * particles_torecv);
-			loc_arr_dst_y = (double *) malloc(sizeof(double) * particles_torecv);
-			loc_arr_pointer = (int *) malloc(sizeof(int) * particles_torecv);
+			DataType* local_mass = (DataType *) malloc(sizeof(DataType) * particles_torecv);
+			DataType* loc_arr_src_x = (DataType *) malloc(sizeof(DataType) * particles_torecv);
+			DataType* loc_arr_dst_x = (DataType *) malloc(sizeof(DataType) * particles_torecv);
+			DataType* loc_arr_src_y = (DataType *) malloc(sizeof(DataType) * particles_torecv);
+			DataType* loc_arr_dst_y = (DataType *) malloc(sizeof(DataType) * particles_torecv);
 
-			temp_mass = (int *) malloc(sizeof(int) * particles_torecv);
-			temp_arr_src_x = (int *) malloc(sizeof(int) * particles_torecv);
-			temp_arr_dst_x = (double *) malloc(sizeof(double) * particles_torecv);
-			temp_arr_src_y = (int *) malloc(sizeof(int) * particles_torecv);
-			temp_arr_dst_y = (double *) malloc(sizeof(double) * particles_torecv);
-			temp_arr_pointer = (int *) malloc(sizeof(int) * particles_torecv);
+			DataType* temp_mass = (DataType *) malloc(sizeof(DataType) * particles_torecv);
+			DataType* temp_arr_src_x = (DataType *) malloc(sizeof(DataType) * particles_torecv);
+			DataType* temp_arr_dst_x = (DataType *) malloc(sizeof(DataType) * particles_torecv);
+			DataType* temp_arr_src_y = (DataType *) malloc(sizeof(DataType) * particles_torecv);
+			DataType* temp_arr_dst_y = (DataType *) malloc(sizeof(DataType) * particles_torecv);
 
 
-			compute_pos_x = (int *) malloc(sizeof(int) * particles_torecv);
-			compute_pos_y = (int *) malloc(sizeof(int) * particles_torecv);
-
-
+			DataType* compute_pos_x = (DataType *) malloc(sizeof(DataType) * particles_torecv);
+			DataType* compute_pos_y = (DataType *) malloc(sizeof(DataType) * particles_torecv);
+		}
 
 		//almost done, just save the image
 		saveBMP(argv[9], image, width, height);
