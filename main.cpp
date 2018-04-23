@@ -69,6 +69,7 @@ int main(int argc, char* argv[])
 
 	//root node stuff goes here
 	if(my_rank == 0){
+
 		//------------------------------------------ Init
 		pos_x = (DataType *) malloc(sizeof(DataType) * numParticlesTotal);
 		pos_y = (DataType *) malloc(sizeof(DataType) * numParticlesTotal);
@@ -100,6 +101,8 @@ int main(int argc, char* argv[])
 
 		DataType* compute_pos_x = (DataType *) malloc(sizeof(DataType) * particle_perproc);
 		DataType* compute_pos_y = (DataType *) malloc(sizeof(DataType) * particle_perproc);
+		DataType* compute_vel_x = (DataType *) malloc(sizeof(DataType) * particle_perproc);
+		DataType* compute_vel_y = (DataType *) malloc(sizeof(DataType) * particle_perproc);
 		//DataType* compute_mass = (DataType *) malloc(sizeof(DataType) * particle_perproc);
 
 		for (int k = 1 ; k < p +1 ; k+=p ) { //distribute data
@@ -107,39 +110,69 @@ int main(int argc, char* argv[])
 				compute_pos_x[j] = pos_x[j*(k-1)];
 				compute_pos_y[j] = pos_y[j*(k-1)];
 			}
-
-			MPI_ISend(&(compute_pos_x[0]), particle_perproc, MPI_INT, k, 0, MPI_COMM_WORLD, );
-			MPI_ISend(&(compute_pos_y[0]), particle_perproc, MPI_INT, k, 0, MPI_COMM_WORLD, );
+			MPI_Send(&(compute_pos_x[0]), particle_perproc, MPI_INT, k, 0, MPI_COMM_WORLD);
+			MPI_Send(&(compute_pos_y[0]), particle_perproc, MPI_INT, k, 0, MPI_COMM_WORLD);
+			MPI_Send(&(compute_vel_x[0]), particle_perproc, MPI_INT, k, 0, MPI_COMM_WORLD);
+			MPI_Send(&(compute_vel_y[0]), particle_perproc, MPI_INT, k, 0, MPI_COMM_WORLD);
 		}
+
+		free(pos_x);
+		free(pos_y);
+		free(vel_x);
+		free(vel_y);
+
+		free(compute_pos_x);
+		free(compute_pos_y);
+		free(compute_vel_x);
+		free(compute_vel_y);
 	}
 
 	else{ //all other nodes do this
 
-		DataType* local_mass = (DataType *) malloc(sizeof(DataType) * particle_perproc);
-		DataType* loc_arr_src_x = (DataType *) malloc(sizeof(DataType) * particle_perproc);
-		DataType* loc_arr_dst_x = (DataType *) malloc(sizeof(DataType) * particle_perproc);
-		DataType* loc_arr_src_y = (DataType *) malloc(sizeof(DataType) * particle_perproc);
-		DataType* loc_arr_dst_y = (DataType *) malloc(sizeof(DataType) * particle_perproc);
+		MPI_Status* stat[5];
+		DataType* loc_mass = (DataType *) malloc(sizeof(DataType) * particle_perproc);
+		DataType* loc_pos_x = (DataType *) malloc(sizeof(DataType) * particle_perproc);
+		DataType* loc_pos_y = (DataType *) malloc(sizeof(DataType) * particle_perproc);
+		DataType* loc_vel_x = (DataType *) malloc(sizeof(DataType) * particle_perproc);
+		DataType* loc_vel_y = (DataType *) malloc(sizeof(DataType) * particle_perproc);
+		DataType* loc_force_x = (DataType *) malloc(sizeof(DataType) * particle_perproc);
+		DataType* loc_force_y = (DataType *) malloc(sizeof(DataType) * particle_perproc);
 
 		DataType* temp_mass = (DataType *) malloc(sizeof(DataType) * particle_perproc);
-		DataType* temp_arr_src_x = (DataType *) malloc(sizeof(DataType) * particle_perproc);
-		DataType* temp_arr_dst_x = (DataType *) malloc(sizeof(DataType) * particle_perproc);
-		DataType* temp_arr_src_y = (DataType *) malloc(sizeof(DataType) * particle_perproc);
-		DataType* temp_arr_dst_y = (DataType *) malloc(sizeof(DataType) * particle_perproc);
+		DataType* temp_pos_x = (DataType *) malloc(sizeof(DataType) * particle_perproc);
+		DataType* temp_pos_y = (DataType *) malloc(sizeof(DataType) * particle_perproc);
+		DataType* temp_force_x = (DataType *) malloc(sizeof(DataType) * particle_perproc);
+		DataType* temp_force_y = (DataType *) malloc(sizeof(DataType) * particle_perproc);
 
-		MPI_Recv(&(loc_arr_src_x[0]),  particle_perproc, MPI_INT, 0, 0, MPI_COMM_WORLD);
-		MPI_Recv(&(loc_arr_src_y[0]),  particle_perproc, MPI_INT, 0, 0, MPI_COMM_WORLD);
+		MPI_Recv(&(temp_mass[0]),  particle_perproc, MPI_INT, 0, 0, MPI_COMM_WORLD, stat[0]);
+		MPI_Recv(&(temp_pos_x[0]),  particle_perproc, MPI_INT, 0, 0, MPI_COMM_WORLD, stat[1]);
+		MPI_Recv(&(temp_pos_x[0]),  particle_perproc, MPI_INT, 0, 0, MPI_COMM_WORLD, stat[2]);
+		MPI_Recv(&(temp_force_x[0]),  particle_perproc, MPI_INT, 0, 0, MPI_COMM_WORLD, stat[3]);
+		MPI_Recv(&(temp_force_y[0]),  particle_perproc, MPI_INT, 0, 0, MPI_COMM_WORLD, stat[4]);
 
 		for (int frames = 0; frames < numSteps ; frames++){
 			for (int sub = 0; sub < subSteps ; sub++){
 				for(int ringcomm = 0; ringcomm < p - 1; ringcomm++){
 					if (my_rank != 0){
+						int rcv_frm = (my_rank)-1 > 0 ? (my_rank)-1 : p-1;
+						int send_to = (my_rank%(p-1))+1;
 
 						//compute FOrcesssssssss and update local_arrays
 					}
 				}
+				if(my_rank != 0){
+				//update position and velocity
+				//MPI barrier
+				}
 			}
-			saveBMP(argv[9], image, width, height); //almost done, just save the image
+			if(my_rank != 0){
+				//everyone sends to master
+			}
+			else{
+				//master receives all and combines and then calls save BMP
+				//saveBMP(argv[9], image, width, height); //almost done, just save the image
+			}
+			
 		}
 	}
 
